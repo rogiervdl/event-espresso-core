@@ -1,6 +1,5 @@
 <?php
-
-
+use EventEspresso\core\interfaces\ResettableInterface;
 
 /**
  * Class EEM_Base
@@ -26,20 +25,20 @@
  * @author                Michael Nelson
  * @since                 EE4
  */
-abstract class EEM_Base extends EE_Base
+abstract class EEM_Base extends EE_Base implements EventEspresso\core\interfaces\ResettableInterface
 {
 
     //admin posty
     //basic -> grants access to mine -> if they don't have it, select none
-    //*_others -> grants access to others that arent private, and all mine -> if they don't have it, select mine
+    //*_others -> grants access to others that aren't private, and all mine -> if they don't have it, select mine
     //*_private -> grants full access -> if dont have it, select all mine and others' non-private
     //*_published -> grants access to published -> if they dont have it, select non-published
     //*_global/default/system -> grants access to global items -> if they don't have it, select non-global
     //publish_{thing} -> can change status TO publish; SPECIAL CASE
     //frontend posty
     //by default has access to published
-    //basic -> grants access to mine that arent published, and all published
-    //*_others ->grants access to others that arent private, all mine
+    //basic -> grants access to mine that aren't published, and all published
+    //*_others ->grants access to others that aren't private, all mine
     //*_private -> grants full access
     //frontend non-posty
     //like admin posty
@@ -1830,18 +1829,16 @@ abstract class EEM_Base extends EE_Base
      * Wrapper for EEM_Base::delete_permanently()
      *
      * @param mixed $id
-     * @param boolean $allow_blocking
-     * @return int the number of rows deleted
+     * @return boolean whether the row got deleted or not
      * @throws \EE_Error
      */
-    public function delete_permanently_by_ID($id, $allow_blocking = true)
+    public function delete_permanently_by_ID($id)
     {
         return $this->delete_permanently(
             array(
                 array($this->get_primary_key_field()->get_name() => $id),
                 'limit' => 1,
-            ),
-            $allow_blocking
+            )
         );
     }
 
@@ -1852,18 +1849,16 @@ abstract class EEM_Base extends EE_Base
      * Wrapper for EEM_Base::delete()
      *
      * @param mixed $id
-     * @param boolean $allow_blocking
-     * @return int the number of rows deleted
+     * @return boolean whether the row got deleted or not
      * @throws \EE_Error
      */
-    public function delete_by_ID($id, $allow_blocking = true)
+    public function delete_by_ID($id)
     {
         return $this->delete(
             array(
                 array($this->get_primary_key_field()->get_name() => $id),
                 'limit' => 1,
-            ),
-            $allow_blocking
+            )
         );
     }
 
@@ -2897,13 +2892,17 @@ abstract class EEM_Base extends EE_Base
     protected function _prepare_value_or_use_default($field_obj, $fields_n_values)
     {
         //if this field doesn't allow nullable, don't allow it
-        if (! $field_obj->is_nullable()
+        if (
+            ! $field_obj->is_nullable()
             && (
-                ! isset($fields_n_values[$field_obj->get_name()]) || $fields_n_values[$field_obj->get_name()] === null)
+                ! isset($fields_n_values[$field_obj->get_name()])
+                || $fields_n_values[$field_obj->get_name()] === null
+            )
         ) {
             $fields_n_values[$field_obj->get_name()] = $field_obj->get_default_value();
         }
-        $unprepared_value = isset($fields_n_values[$field_obj->get_name()]) ? $fields_n_values[$field_obj->get_name()]
+        $unprepared_value = isset($fields_n_values[$field_obj->get_name()])
+            ? $fields_n_values[$field_obj->get_name()]
             : null;
         return $this->_prepare_value_for_use_in_db($unprepared_value, $field_obj);
     }
